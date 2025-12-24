@@ -18,6 +18,9 @@ import customtkinter as ctk
 
 # -------------------------------- Styling -------------------------------- #
 
+applicationName = "MEALY DISPLAYINATOR 3000"
+applicationVersion = 2.0
+
 smallPadding = 8
 bigPadding = 16
 
@@ -149,11 +152,10 @@ class CardGridUI :
         self.indexOffset = indexOffset
         self.cards = []
 
-        for col in range(maxColumns) : parent.grid_columnconfigure(col, weight = 1)
+        for col in range(maxColumns) : self.parent.grid_columnconfigure(col, weight = 1)
 
     def clear(self) :
         for card in self.cards : card.destroy()
-
         self.cards.clear()
 
     def addCard(self, card) :
@@ -290,7 +292,7 @@ class Application(ctk.CTk) :
         self.grid_rowconfigure(0, weight = 0)
         self.grid_rowconfigure(1, weight = 1)
         self.grid_columnconfigure(0, weight = 1)
-        self.title("MEALY DISPLAYINATOR 3000 v2")
+        self.title(f"{applicationName} v{applicationVersion}")
 
         self.api = MealAPI()
         self.repo = MealRepo(self.api)
@@ -309,7 +311,7 @@ class Application(ctk.CTk) :
 
         ctk.CTkLabel(
             header,
-            text = "MEALY DISPLAYINATOR 3000",
+            text = applicationName,
             font = bigFont
         ).grid(row = 0, column = 0, padx = bigPadding, pady = bigPadding, sticky = "nsw")
 
