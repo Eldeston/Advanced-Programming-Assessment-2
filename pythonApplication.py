@@ -1,4 +1,12 @@
-# -------------------------------- Imports -------------------------------- #
+# -------------------------------- HIERARCHY -------------------------------- #
+
+# MealAPI - API
+# CardUI - Widget
+# CardGridUI - Widget
+# RecipeUI - Top Level
+# Application - Main Window
+
+# -------------------------------- IMPORTS -------------------------------- #
 
 # Imports requests for getting API data
 import requests
@@ -16,202 +24,234 @@ from io import BytesIO
 # python -m pip install customtkinter
 import customtkinter as ctk
 
-# -------------------------------- Styling -------------------------------- #
+# -------------------------------- STYLING -------------------------------- #
 
-applicationName = "MEALY DISPLAYINATOR 3000"
-applicationVersion = 2.0
+applicationName = 'MEALY DISPLAYINATOR 3000'
+applicationVersion = 3.0
 
-smallPadding = 8
-bigPadding = 16
+smallPadding = 10
+bigPadding = 20
 
-smallFont = ("JetBrains Mono", 16)
-mediumFont = ("JetBrains Mono", 20)
-bigFont = ("JetBrains Mono", 24)
+smallFont = ('JetBrains Mono', 16)
+mediumFont = ('JetBrains Mono', 20)
+bigFont = ('JetBrains Mono', 24)
 
-# -------------------------------- API LAYER — Main API -------------------------------- #
+# -------------------------------- CORE API -------------------------------- #
 
 class MealAPI :
     def __init__(self) :
-        self.url = "https://www.themealdb.com/api/json/v1/1"
+        self.url = 'https://www.themealdb.com/api/json/v1/1'
 
-    def search(self, mode, prompt) :
+        print(
+f'''
+The Meal DB : Free Recipe API
+The API and site will always remain free at point of access.
+
+URL: {self.url}
+'''
+        )
+
+    # Raw API request
+    def request(self, mode, prompt) :
         routes = {
-            "name" : "search.php?s",
-            "category" : "filter.php?c",
-            "ingredient" : "filter.php?i",
-            "area" : "filter.php?a",
-            "id" : "lookup.php?i"
+            'name' : 'search.php?s',
+            'category' : 'filter.php?c',
+            'ingredient' : 'filter.php?i',
+            'area' : 'filter.php?a',
+            'id' : 'lookup.php?i'
         }
 
         try :
-            response = requests.get(f"{self.url}/{routes[mode]}={prompt}")
-            if response.status_code == 200 : return response.json()
+            response = requests.get(f'{self.url}/{routes[mode]}={prompt}')
+            if response.status_code == 200 :
+                return response.json()
         except Exception as exception :
-            print("API error :", exception)
+            print('API error :', exception)
 
         return None
 
-# -------------------------------- REPOSITORY LAYER - Manages API data -------------------------------- #
-
-class MealRepo :
-    def __init__(self, api : MealAPI) :
-        self.api = api
-
     def searchMeals(self, mode, prompt) :
-        data = self.api.search(mode, prompt)
+        data = self.request(mode, prompt)
 
-        if not (data and data.get("meals")) : return []
+        if not (data and data.get('meals')) :
+            return []
 
-        meals = []
+        return data['meals']
 
-        for meal in data["meals"] :
-            meal["previewThumb"] = meal["strMealThumb"] + "/preview" if meal["strMealThumb"] else None
-            meals.append(meal)
+    def processMeals(self, meals) :
+        processed = []
 
-        return meals
+        for meal in meals :
+            # Build a clean meal object with only the fields the UI needs
+            cleanMeal = {
+                'idMeal' : meal.get('idMeal'),
+                'strMeal' : meal.get('strMeal'),
+                'strMealThumb' : meal.get('strMealThumb'),
+                'previewThumb' : f'{meal.get('strMealThumb')}/preview' if meal.get('strMealThumb') else None,
+                'strInstructions' : meal.get('strInstructions'),
+                'strYoutube' : meal.get('strYoutube'),
+                'ingredients' : []
+            }
 
-    def extractIngredients(self, meal) :
-        ingredients = []
+            # Extract ingredients
+            for index in range(1, 21) :
+                ingredient = meal.get(f'strIngredient{index}')
+                measure = meal.get(f'strMeasure{index}')
 
-        for index in range(1, 21) :
-            ingredient = meal.get(f"strIngredient{index}")
-            measure = meal.get(f"strMeasure{index}")
+                if ingredient and ingredient.strip() : cleanMeal['ingredients'].append(f'{ingredient} - {measure}')
 
-            if ingredient and ingredient.strip() : ingredients.append(f"{ingredient} - {measure}")
+            processed.append(cleanMeal)
 
-        return ingredients
+        return processed
 
-# -------------------------------- UI LAYER — Card Factory (creates card widgets only) -------------------------------- #
+# -------------------------------- CARD UI -------------------------------- #
 
-class CardUI :
-    def __init__(self, app) :
-        self.app = app
-        self.images = []
-        self.cache = {}  # Cache for downloaded images
-        self.tempImg = ctk.CTkImage(Image.new("RGB", (250, 250), "gray"), size = (250, 250))
+class CardUI(ctk.CTkFrame) :
+    def __init__(self, parent, mealData, placeHolder, api : MealAPI) :
+        super().__init__(parent)
 
-    def loadImageAsync(self, url, label) :
-        # If cached, use immediately
-        if url in self.cache :
-            label.configure(image = self.cache[url])
-            return
+        self.api = api
+        self.mealData = mealData
 
+        # Image label
+        self.imgLabel = ctk.CTkLabel(self, image = placeHolder, text = '')
+        self.imgLabel.pack(pady = smallPadding)
+
+        # Title
+        ctk.CTkLabel(
+            self,
+            text = mealData['strMeal'],
+            font = bigFont,
+            wraplength = 250
+        ).pack()
+
+        # ID label
+        ctk.CTkLabel(
+            self,
+            text = f'Meal ID: {mealData['idMeal']}',
+            font = smallFont,
+            wraplength = 250
+        ).pack()
+
+        # Bind click to open recipe popup
+        self.bind('<Button-1>', lambda event : self.openFullRecipe())
+        self.imgLabel.bind('<Button-1>', lambda event : self.openFullRecipe())
+
+        # v2-style preview thumbnail handling
+        mealThumbUrl = mealData.get('previewThumb')
+        if mealThumbUrl : self.loadImageAsync(mealThumbUrl)
+    
+    def openFullRecipe(self) :
+        # Fetch full recipe details
+        full = self.api.searchMeals('id', self.mealData['idMeal'])
+        full = self.api.processMeals(full)
+
+        if full : RecipeUI(full[0])
+
+    # Replaces placeholder image with the actual image as it loads in the background
+    def loadImageAsync(self, url) :
         def task() :
             try :
                 response = requests.get(url)
                 imgPIL = Image.open(BytesIO(response.content))
                 imgTK = ctk.CTkImage(imgPIL, size = (250, 250))
 
-                # Cache it
-                self.cache[url] = imgTK
-                self.images.append(imgTK)
-
-                # Update UI safely
-                label.after(0, lambda : label.configure(image = imgTK))
-
+                # Update image
+                self.imgLabel.configure(image = imgTK)
             except Exception as exception :
-                print("Failed to load image :", url, exception)
+                print('Failed to load image:', url, exception)
 
         threading.Thread(target = task, daemon = True).start()
 
-    def createCard(self, parent, meal) :
-        card = ctk.CTkFrame(parent)
+# -------------------------------- CARD GRID UI -------------------------------- #
 
-        imgLabel = ctk.CTkLabel(card, image = self.tempImg, text = "")
-        imgLabel.pack(pady = smallPadding)
-
-        # Async image loading
-        if meal["previewThumb"] :
-            self.loadImageAsync(meal["previewThumb"], imgLabel)
-
-        ctk.CTkLabel(
-            card,
-            text = meal["strMeal"],
-            font = bigFont,
-            wraplength = 250
-        ).pack()
-
-        ctk.CTkLabel(
-            card,
-            text = f"Meal ID : {meal['idMeal']}",
-            font = smallFont,
-            wraplength = 250
-        ).pack()
-
-        card.bind("<Button-1>", lambda event : self.app.openRecipe(meal))
-        imgLabel.bind("<Button-1>", lambda event : self.app.openRecipe(meal))
-
-        return card
-
-# -------------------------------- UI LAYER — Card Grid (layout only) -------------------------------- #
-
-class CardGridUI :
+class CardGridUI(ctk.CTkScrollableFrame) :
     def __init__(self, parent, maxColumns = 4, indexOffset = 0) :
-        self.parent = parent
+        super().__init__(parent)
+
         self.maxColumns = maxColumns
         self.indexOffset = indexOffset
         self.cards = []
 
-        for col in range(maxColumns) : self.parent.grid_columnconfigure(col, weight = 1)
+        # Loading/Recipe label
+        self.loadLabel = ctk.CTkLabel(
+            self,
+            text = 'Start Searching a Recipe',
+            font = bigFont
+        )
+        
+        self.loadLabel.grid(row = 0, column = 0, columnspan = maxColumns, padx = smallPadding, pady = smallPadding)
 
+        # Configure responsive columns
+        for col in range(maxColumns) :
+            self.grid_columnconfigure(col, weight = 1)
+
+    # Clears all cards
     def clear(self) :
         for card in self.cards : card.destroy()
         self.cards.clear()
 
+    # Adds a CardUI widget and places it in the grid
     def addCard(self, card) :
         index = len(self.cards) + self.indexOffset
-        row = index // self.maxColumns
+        row = (index // self.maxColumns) + 1   # +1 because row 0 is the label
         col = index % self.maxColumns
 
         card.grid(row = row, column = col, padx = smallPadding, pady = smallPadding)
         self.cards.append(card)
 
-# -------------------------------- UI LAYER — Recipe Window -------------------------------- #
+# -------------------------------- RECIPE UI -------------------------------- #
 
 class RecipeUI(ctk.CTkToplevel) :
-    def __init__(self, meal, repo : MealRepo) :
+    def __init__(self, meal) :
         super().__init__()
 
-        self.title(meal["strMeal"])
-        self.geometry("1100x800")
+        self.title(meal['strMeal'])
+        self.geometry('1100x800')
         self.grab_set()
 
+        # Configure layout (two-column layout)
         self.grid_rowconfigure(0, weight = 1)
         self.grid_columnconfigure(0, weight = 1)
         self.grid_columnconfigure(1, weight = 1)
 
-        # Main frame
+        # ---------------- MAIN FRAME (image + ingredients) ---------------- #
+
         mainFrame = ctk.CTkScrollableFrame(self)
-        mainFrame.grid(row = 0, column = 0, sticky = "nsew", padx = bigPadding, pady = bigPadding)
+        mainFrame.grid(row = 0, column = 0, sticky = 'nsew', padx = bigPadding, pady = bigPadding)
         mainFrame.grid_columnconfigure(0, weight = 1)
 
         # Placeholder image
-        self.tempImg = ctk.CTkImage(Image.new("RGB", (450, 450), "gray"), size = (450, 450))
+        self.tempImg = ctk.CTkImage(Image.new('RGB', (450, 450), 'gray'), size = (450, 450))
 
+        # Title
         ctk.CTkLabel(
             mainFrame,
-            text = meal["strMeal"],
-            font = bigFont
+            text = meal['strMeal'],
+            font = bigFont,
+            wraplength = 400
         ).grid(row = 0, column = 0, pady = smallPadding)
 
         # Image placeholder
-        self.img_label = ctk.CTkLabel(mainFrame, image = self.tempImg, text = "")
-        self.img_label.grid(row = 1, column = 0, pady = smallPadding)
+        self.imgLabel = ctk.CTkLabel(mainFrame, image = self.tempImg, text = '')
+        self.imgLabel.grid(row = 1, column = 0, pady = smallPadding)
 
         # Load image asynchronously
-        if meal["strMealThumb"] :
+        if meal.get('strMealThumb') :
             threading.Thread(
                 target = self.loadImageAsync,
-                args = (meal["strMealThumb"],),
+                args = (meal['strMealThumb'],),
                 daemon = True
             ).start()
 
-        # Ingredients
-        ingredients = repo.extractIngredients(meal)
+        # ---------------- INGREDIENTS ---------------- #
+
+        ingredients = meal.get('ingredients', [])
+
         if ingredients :
             ctk.CTkLabel(
                 mainFrame,
-                text = "Ingredients",
+                text = 'Ingredients',
                 font = mediumFont
             ).grid(row = 2, column = 0, pady = smallPadding)
 
@@ -220,45 +260,47 @@ class RecipeUI(ctk.CTkToplevel) :
                     mainFrame,
                     text = item,
                     font = smallFont,
-                    anchor = "w",
-                    justify = "left"
-                ).grid(row = 3 + index, column = 0, sticky = "w", padx = smallPadding)
+                    anchor = 'w',
+                    justify = 'left'
+                ).grid(row = 3 + index, column = 0, sticky = 'w', padx = smallPadding)
 
-        # Instructions frame
-        instructionFrame = ctk.CTkScrollableFrame(self, width = 400)
-        instructionFrame.grid(row = 0, column = 1, sticky = "nsew", padx = bigPadding, pady = bigPadding)
+        # ---------------- INSTRUCTIONS FRAME ---------------- #
+
+        instructionFrame = ctk.CTkScrollableFrame(self, width = 500)
+        instructionFrame.grid(row = 0, column = 1, sticky = 'nsew', padx = bigPadding, pady = bigPadding)
         instructionFrame.grid_columnconfigure(0, weight = 1)
 
         ctk.CTkLabel(
             instructionFrame,
-            text = "Instructions",
+            text = 'Instructions',
             font = mediumFont
         ).grid(row = 0, column = 0, pady = smallPadding)
 
-        # Instructions placeholder
         self.instructions_label = ctk.CTkLabel(
             instructionFrame,
-            text = meal["strInstructions"],
+            text = meal.get('strInstructions', 'No instructions available.'),
             font = smallFont,
             wraplength = 500,
-            justify = "left"
+            justify = 'left'
         )
 
-        self.instructions_label.grid(row = 1, column = 0, pady = smallPadding, sticky = "nw")
+        self.instructions_label.grid(row = 1, column = 0, pady = smallPadding, sticky = 'nw')
 
-        # YouTube button
-        if meal.get("strYoutube") :
+        # ---------------- YOUTUBE BUTTON ---------------- #
+
+        if meal.get('strYoutube') :
             ctk.CTkButton(
                 self,
-                text = "Watch Tutorial on YouTube",
+                text = 'Watch Tutorial on YouTube',
                 font = mediumFont,
-                command = lambda : webbrowser.open(meal["strYoutube"])
+                command = lambda : webbrowser.open(meal['strYoutube'])
             ).grid(row = 1, column = 0, pady = bigPadding)
 
-        # Close button
+        # ---------------- CLOSE BUTTON ---------------- #
+
         ctk.CTkButton(
             self,
-            text = "Close",
+            text = 'Close',
             font = mediumFont,
             command = self.destroy
         ).grid(row = 1, column = 1, pady = bigPadding)
@@ -272,112 +314,108 @@ class RecipeUI(ctk.CTkToplevel) :
             imgPIL = Image.open(BytesIO(response.content))
             imgTK = ctk.CTkImage(imgPIL, size = (450, 450))
 
-            self.after(0, lambda : self.updateImage(imgTK))
+            self.updateImage(imgTK)
         except Exception as exception :
-            print("Failed to load recipe image :", exception)
+            print('Failed to load recipe image :', exception)
 
     def updateImage(self, imgTK) :
-        self.img_ref = imgTK
-        self.img_label.configure(image = imgTK, text = "")
+        self.imgRef = imgTK
+        self.imgLabel.configure(image = imgTK, text = '')
 
-# -------------------------------- APPLICATION CONTROLLER - Main application -------------------------------- #
+# -------------------------------- MAIN APPLICATION -------------------------------- #
 
 class Application(ctk.CTk) :
     def __init__(self) :
         super().__init__()
 
-        self.geometry("360x360")
-        self.after(1, self.wm_state, "zoomed")
+        self.geometry('360x360')
+        self.after(1, self.wm_state, 'zoomed')
 
         self.grid_rowconfigure(0, weight = 0)
         self.grid_rowconfigure(1, weight = 1)
         self.grid_columnconfigure(0, weight = 1)
-        self.title(f"{applicationName} v{applicationVersion}")
+        self.title(f'{applicationName} v{applicationVersion}')
 
         self.api = MealAPI()
-        self.repo = MealRepo(self.api)
-        self.factory = CardUI(self)
 
         self.buildUI()
-
-        self.runSearch("Seafood", "name")
 
     # ---------------- UI ---------------- #
 
     def buildUI(self) :
         header = ctk.CTkFrame(self)
-        header.grid(row = 0, column = 0, sticky = "nwe")
+        header.grid(row = 0, column = 0, sticky = 'nwe')
         header.grid_columnconfigure(0, weight = 1)
 
         ctk.CTkLabel(
             header,
             text = applicationName,
             font = bigFont
-        ).grid(row = 0, column = 0, padx = bigPadding, pady = bigPadding, sticky = "nsw")
+        ).grid(row = 0, column = 0, padx = bigPadding, pady = bigPadding, sticky = 'nsw')
 
         modeMenu = ctk.CTkOptionMenu(
             header,
-            values = ["name", "category", "ingredient", "area", "id"],
+            values = ['Name', 'Category', 'Ingredient', 'Area', 'ID'],
             font = mediumFont,
             dropdown_font = mediumFont
         )
 
-        modeMenu.grid(row = 0, column = 2, padx = bigPadding, pady = bigPadding, sticky = "nse")
+        modeMenu.grid(row = 0, column = 2, padx = bigPadding, pady = bigPadding, sticky = 'nse')
 
         searchBar = ctk.CTkEntry(
             header,
-            placeholder_text = "Search...",
+            placeholder_text = 'Search...',
             font = bigFont
         )
 
-        searchBar.grid(row = 0, column = 4, padx = bigPadding, pady = bigPadding, sticky = "nse")
+        searchBar.grid(row = 0, column = 4, padx = bigPadding, pady = bigPadding, sticky = 'nse')
 
         searchPrompt = lambda : self.runSearch(searchBar.get(), modeMenu.get())
-        searchBar.bind("<Return>", lambda event : searchPrompt())
+        searchBar.bind('<Return>', lambda event : searchPrompt())
 
         ctk.CTkButton(
             header,
-            text = "🔍",
+            text = '🔍',
             font = bigFont,
             command = searchPrompt
-        ).grid(row = 0, column = 3, padx = bigPadding, pady = bigPadding, sticky = "e")
+        ).grid(row = 0, column = 3, padx = bigPadding, pady = bigPadding, sticky = 'nse')
 
-        main = ctk.CTkScrollableFrame(self)
-        main.grid(row = 1, column = 0, sticky = "nsew")
+        self.cardGrid = CardGridUI(self, 4, 0)
+        self.cardGrid.grid(row = 1, column = 0, sticky = 'nsew')
 
-        ctk.CTkLabel(
-            main,
-            text = "Recipes",
-            font = bigFont
-        ).grid(row = 0, column = 0, columnspan = 4, padx = smallPadding, pady = smallPadding)
-
-        self.cardGrid = CardGridUI(main, 4, 4)
-
-    # ---------------- Search Logic ---------------- #
+    # ---------------- SEARCH LOGIC ---------------- #
 
     def runSearch(self, prompt, mode) :
+        # Clear grid
         self.cardGrid.clear()
+        # Change to loading while waiting
+        self.cardGrid.loadLabel.configure(text = f'Loading "{prompt}" by {mode}…')
+
         threading.Thread(
-            target = self._searchThread,
+            target = self.searchThread,
             args = (prompt, mode),
             daemon = True
         ).start()
 
-    def _searchThread(self, prompt, mode) :
-        meals = self.repo.searchMeals(mode, prompt)
+    def searchThread(self, prompt, mode):
+        # Process Raw API prompt
+        raw = self.api.searchMeals(mode.lower(), prompt.lower())
+        meals = self.api.processMeals(raw)
 
+        # Temp image for all the cards as it loads
+        tempImg = ctk.CTkImage(Image.new('RGB', (250, 250), 'gray'), size = (250, 250))
+
+        # Update loading label if none found
+        if not meals:
+            self.after(0, lambda: self.cardGrid.loadLabel.configure(text="No results found"))
+            return
+
+        # Update loading label if results found
+        self.cardGrid.loadLabel.configure(text = f'Recipes for "{prompt}" by {mode}')
+
+        # Add in the cards
         for meal in meals :
-            card = self.factory.createCard(self.cardGrid.parent, meal)
+            card = CardUI(self.cardGrid, meal, tempImg, self.api)
             self.cardGrid.addCard(card)
 
-    # ---------------- Recipe Window ---------------- #
-
-    def openRecipe(self, meal) :
-        full = self.api.search("id", meal["idMeal"])
-
-        if full and full.get("meals") : meal = full["meals"][0]
-
-        RecipeUI(meal, self.repo)
-
-# Run Application
 Application().mainloop()
