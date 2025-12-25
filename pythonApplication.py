@@ -1,8 +1,36 @@
+# Debug stuff (Do not touch)
+
+# The answer was:
+# Tajine de Poulet aux Carottes et Patates Douces (Chicken and Sweet Potato Tagine)
+
+def debugLongestMealName(api : MealAPI):
+    print("[DEBUG] Fetching longest meal name (optimized)…")
+
+    longestName = ""
+    longestMeal = None
+
+    for letter in "abcdefghijklmnopqrstuvwxyz":
+        print(f"[DEBUG] Searching letter: {letter}")
+
+        meals = api.searchMeals("name", letter)
+        meals = api.processMeals(meals)
+
+        for meal in meals:
+            name = meal.get("strMeal", "")
+            if len(name) > len(longestName):
+                longestName = name
+                longestMeal = meal
+
+    print(f"\n[DEBUG] Longest Meal Name: \"{longestName}\" ({len(longestName)} chars)")
+    print(f"[DEBUG] Meal ID: {longestMeal['idMeal']}")
+    print(f"[DEBUG] Thumbnail: {longestMeal['strMealThumb']}")
+
 # -------------------------------- HIERARCHY -------------------------------- #
 
 # MealAPI - API
 # CardUI - Widget
-# CardGridUI - Widget
+# HeaderUI - Widget
+# MainUI - Widget
 # RecipeUI - Top Level
 # Application - Main Window
 
@@ -27,7 +55,7 @@ import customtkinter as ctk
 # -------------------------------- STYLING -------------------------------- #
 
 applicationName = 'MEALY DISPLAYINATOR 3000'
-applicationVersion = 3.0
+applicationVersion = 4.0
 
 smallPadding = 10
 bigPadding = 20
@@ -54,19 +82,18 @@ URL: {self.url}
     # Raw API request
     def request(self, mode, prompt) :
         routes = {
+            'id' : 'lookup.php?i',
             'name' : 'search.php?s',
             'category' : 'filter.php?c',
             'ingredient' : 'filter.php?i',
-            'area' : 'filter.php?a',
-            'id' : 'lookup.php?i'
+            'area' : 'filter.php?a'
         }
 
         try :
             response = requests.get(f'{self.url}/{routes[mode]}={prompt}')
-            if response.status_code == 200 :
-                return response.json()
+            if response.status_code == 200 : return response.json()
         except Exception as exception :
-            print('API error :', exception)
+            print('API error:', exception)
 
         return None
 
@@ -104,6 +131,36 @@ URL: {self.url}
 
         return processed
 
+    def listOptions(self, mode) :
+        routes = {
+            'category': 'list.php?c=list',
+            'ingredient': 'list.php?i=list',
+            'area': 'list.php?a=list'
+        }
+
+        if mode not in routes:
+            print(f'Invalid list mode: {mode}')
+            return []
+
+        try :
+            response = requests.get(f'{self.url}/{routes[mode]}')
+
+            if response.status_code == 200 :
+                data = response.json()
+
+                # All three endpoints return a list under "meals"
+                items = data.get('meals', [])
+
+                # Normalize output to a simple list of strings
+                if mode == 'category' : return [item['strCategory'] for item in items]
+                if mode == 'ingredient' : return [item['strIngredient'] for item in items]
+                if mode == 'area' : return [item['strArea'] for item in items]
+
+        except Exception as exception :
+            print('API error:', exception)
+
+        return []
+
 # -------------------------------- CARD UI -------------------------------- #
 
 class CardUI(ctk.CTkFrame) :
@@ -137,9 +194,13 @@ class CardUI(ctk.CTkFrame) :
         self.bind('<Button-1>', lambda event : self.openFullRecipe())
         self.imgLabel.bind('<Button-1>', lambda event : self.openFullRecipe())
 
-        # v2-style preview thumbnail handling
         mealThumbUrl = mealData.get('previewThumb')
-        if mealThumbUrl : self.loadImageAsync(mealThumbUrl)
+
+        if mealThumbUrl :
+            threading.Thread(
+                target = lambda : self.loadImageAsync(mealThumbUrl),
+                daemon = True
+            ).start()
     
     def openFullRecipe(self) :
         # Fetch full recipe details
@@ -150,22 +211,19 @@ class CardUI(ctk.CTkFrame) :
 
     # Replaces placeholder image with the actual image as it loads in the background
     def loadImageAsync(self, url) :
-        def task() :
-            try :
-                response = requests.get(url)
-                imgPIL = Image.open(BytesIO(response.content))
-                imgTK = ctk.CTkImage(imgPIL, size = (250, 250))
+        try :
+            response = requests.get(url)
+            imgPIL = Image.open(BytesIO(response.content))
+            imgTK = ctk.CTkImage(imgPIL, size = (250, 250))
 
-                # Update image
-                self.imgLabel.configure(image = imgTK)
-            except Exception as exception :
-                print('Failed to load image:', url, exception)
-
-        threading.Thread(target = task, daemon = True).start()
+            # Update image
+            self.imgLabel.configure(image = imgTK)
+        except Exception as exception :
+            print('Failed to load image:', url, exception)
 
 # -------------------------------- CARD GRID UI -------------------------------- #
 
-class CardGridUI(ctk.CTkScrollableFrame) :
+class MainUI(ctk.CTkScrollableFrame) :
     def __init__(self, parent, maxColumns = 4, indexOffset = 0) :
         super().__init__(parent)
 
@@ -194,7 +252,7 @@ class CardGridUI(ctk.CTkScrollableFrame) :
     # Adds a CardUI widget and places it in the grid
     def addCard(self, card) :
         index = len(self.cards) + self.indexOffset
-        row = (index // self.maxColumns) + 1   # +1 because row 0 is the label
+        row = (index // self.maxColumns) + 1 # +1 because row 0 is the label
         col = index % self.maxColumns
 
         card.grid(row = row, column = col, padx = smallPadding, pady = smallPadding)
@@ -208,6 +266,8 @@ class RecipeUI(ctk.CTkToplevel) :
 
         self.title(meal['strMeal'])
         self.geometry('1100x800')
+
+        # Focuses all the input into this window
         self.grab_set()
 
         # Configure layout (two-column layout)
@@ -239,8 +299,7 @@ class RecipeUI(ctk.CTkToplevel) :
         # Load image asynchronously
         if meal.get('strMealThumb') :
             threading.Thread(
-                target = self.loadImageAsync,
-                args = (meal['strMealThumb'],),
+                target = lambda : self.loadImageAsync(meal['strMealThumb']),
                 daemon = True
             ).start()
 
@@ -266,9 +325,8 @@ class RecipeUI(ctk.CTkToplevel) :
 
         # ---------------- INSTRUCTIONS FRAME ---------------- #
 
-        instructionFrame = ctk.CTkScrollableFrame(self, width = 500)
+        instructionFrame = ctk.CTkScrollableFrame(self)
         instructionFrame.grid(row = 0, column = 1, sticky = 'nsew', padx = bigPadding, pady = bigPadding)
-        instructionFrame.grid_columnconfigure(0, weight = 1)
 
         ctk.CTkLabel(
             instructionFrame,
@@ -280,7 +338,7 @@ class RecipeUI(ctk.CTkToplevel) :
             instructionFrame,
             text = meal.get('strInstructions', 'No instructions available.'),
             font = smallFont,
-            wraplength = 500,
+            wraplength = 400,
             justify = 'left'
         )
 
@@ -291,19 +349,19 @@ class RecipeUI(ctk.CTkToplevel) :
         if meal.get('strYoutube') :
             ctk.CTkButton(
                 self,
-                text = 'Watch Tutorial on YouTube',
+                text = 'Watch YouTube Tutorial',
                 font = mediumFont,
                 command = lambda : webbrowser.open(meal['strYoutube'])
-            ).grid(row = 1, column = 0, pady = bigPadding)
+            ).grid(row = 1, column = 0, padx = bigPadding, pady = bigPadding)
 
         # ---------------- CLOSE BUTTON ---------------- #
 
         ctk.CTkButton(
             self,
-            text = 'Close',
+            text = 'Close Popup Window',
             font = mediumFont,
             command = self.destroy
-        ).grid(row = 1, column = 1, pady = bigPadding)
+        ).grid(row = 1, column = 1, padx = bigPadding, pady = bigPadding)
 
     # ---------------- Async loaders ---------------- #
 
@@ -322,6 +380,163 @@ class RecipeUI(ctk.CTkToplevel) :
         self.imgRef = imgTK
         self.imgLabel.configure(image = imgTK, text = '')
 
+# -------------------------------- HEADER UI -------------------------------- #
+
+class HeaderUI(ctk.CTkFrame) :
+    def __init__(self, parent, getSuggestions, runSearch) :
+        super().__init__(parent)
+
+        self.fullSuggestions = []
+        self.runSearch = runSearch
+        self.getSuggestions = getSuggestions
+
+        self.grid_columnconfigure(0, weight = 1)
+
+        # Track last typed text to avoid race conditions
+        self.lastQuery = ""
+
+        # ---------------- TITLE ---------------- #
+
+        ctk.CTkLabel(
+            self,
+            text = applicationName,
+            font = bigFont
+        ).grid(row = 0, column = 0, padx = bigPadding, pady = bigPadding, sticky = 'nsw')
+
+        # ---------------- MODE MENU ---------------- #
+
+        self.modeMenu = ctk.CTkOptionMenu(
+            self,
+            values = ['Name', 'Category', 'Ingredient', 'Area', 'ID'],
+            font = mediumFont,
+            dropdown_font = mediumFont
+        )
+
+        self.modeMenu.grid(row = 0, column = 2, padx = bigPadding, pady = bigPadding, sticky = 'nse')
+
+        # ---------------- SEARCH BUTTON ---------------- #
+
+        self.searchButton = ctk.CTkButton(
+            self,
+            text = '🔍',
+            font = bigFont
+        )
+
+        self.searchButton.grid(row = 0, column = 3, padx = bigPadding, pady = bigPadding, sticky = 'nse')
+
+        # ---------------- SEARCH BAR ---------------- #
+
+        self.searchBar = ctk.CTkEntry(
+            self,
+            placeholder_text = 'Search...',
+            font = bigFont
+        )
+
+        self.searchBar.grid(row = 0, column = 4, ipadx = bigPadding * 8, padx = bigPadding, pady = bigPadding, sticky = 'nswe')
+
+        # Bind typing event
+        self.searchBar.bind('<KeyRelease>', self.updateAutocomplete)
+
+        # ---------------- AUTOCOMPLETE FRAME ---------------- #
+
+        self.autoFrame = ctk.CTkFrame(self)
+        self.autoFrame.grid(row = 1, column = 0, columnspan = 5, sticky = 'nwe', padx = bigPadding)
+        self.autoFrame.grid_columnconfigure((0, 1, 2, 3), weight = 1)
+        self.autoFrame.grid_remove() # Hidden at startup
+
+        # Suggested label
+        self.suggestLabel = ctk.CTkLabel(
+            self.autoFrame,
+            text = 'Suggested',
+            font = bigFont
+        )
+
+        self.suggestLabel.grid(row = 0, column = 0, columnspan = 4, pady = (smallPadding, 0))
+
+        # Pre-create 4 suggestion buttons
+        self.autoButtons = []
+
+        for index in range(4) :
+            btn = ctk.CTkButton(
+                self.autoFrame,
+                text = '',
+                font = mediumFont,
+                command = lambda i = index : self.selectSuggestion(i)
+            )
+
+            btn.grid(row = 1, column = index, padx = bigPadding, pady = bigPadding, sticky = 'we')
+            self.autoButtons.append(btn)
+
+    # ---------------- AUTOCOMPLETE LOGIC ---------------- #
+
+    def updateAutocomplete(self, event = None) :
+        text = self.searchBar.get().strip()
+        self.lastQuery = text
+
+        # Hide immediately if empty
+        if not text :
+            self.hideAutocomplete()
+            return
+
+        # Threaded suggestion fetch
+        threading.Thread(
+            target = lambda : self.fetchSuggestions(text, self.modeMenu.get().lower()),
+            daemon = True
+        ).start()
+
+    def fetchSuggestions(self, text, mode):
+        # Ignore outdated threads
+        if text != self.lastQuery : return
+
+        # Ask the injected function for suggestions
+        suggestions = self.getSuggestions(text, mode)
+
+        # Push UI update to main thread
+        self.after(0, lambda : self.showSuggestions(suggestions))
+
+    def showSuggestions(self, suggestions):
+        self.fullSuggestions = suggestions
+
+        # If user cleared input while thread was running
+        if not (self.lastQuery and suggestions) :
+            self.hideAutocomplete()
+            return
+
+        # Show frame
+        self.autoFrame.grid()
+
+        # Update button texts
+        maxChars = 40  # tune this number however you like
+
+        for index, btn in enumerate(self.autoButtons):
+            if index < len(suggestions):
+                fullText = suggestions[index]
+
+                # Word-based truncation by character count
+                words = fullText.split()
+                short = ""
+
+                for word in words:
+                    # +1 accounts for the space
+                    if len(short) + len(word) + 1 > maxChars:
+                        short = short.rstrip() + "..."
+                        break
+                    short += word + " "
+
+                btn.configure(text = short.strip())
+
+    def hideAutocomplete(self) :
+        self.autoFrame.grid_remove()
+
+    def selectSuggestion(self, index) :
+        text = self.fullSuggestions[index]
+        self.searchBar.delete(0, 'end')
+        self.searchBar.insert(0, text)
+        self.hideAutocomplete()
+
+        # Trigger search using injected function
+        self.runSearch(text, self.modeMenu.get())
+
 # -------------------------------- MAIN APPLICATION -------------------------------- #
 
 class Application(ctk.CTk) :
@@ -329,58 +544,32 @@ class Application(ctk.CTk) :
         super().__init__()
 
         self.geometry('360x360')
-        self.after(1, self.wm_state, 'zoomed')
+        self.after(0, self.wm_state, 'zoomed')
+        self.title(f'{applicationName} v{applicationVersion}')
 
+        # Grid config to adapt to layout
         self.grid_rowconfigure(0, weight = 0)
         self.grid_rowconfigure(1, weight = 1)
         self.grid_columnconfigure(0, weight = 1)
-        self.title(f'{applicationName} v{applicationVersion}')
 
         self.api = MealAPI()
 
-        self.buildUI()
+        # threading.Thread(
+        #     target = lambda : debugLongestMealName(self.api),
+        #     daemon = True
+        # ).start()
 
-    # ---------------- UI ---------------- #
+        # ---------------- MAIN UI ---------------- #
 
-    def buildUI(self) :
-        header = ctk.CTkFrame(self)
+        header = HeaderUI(self, self.getAutocomplete, self.runSearch)
         header.grid(row = 0, column = 0, sticky = 'nwe')
-        header.grid_columnconfigure(0, weight = 1)
 
-        ctk.CTkLabel(
-            header,
-            text = applicationName,
-            font = bigFont
-        ).grid(row = 0, column = 0, padx = bigPadding, pady = bigPadding, sticky = 'nsw')
+        searchPrompt = lambda : self.runSearch(header.searchBar.get(), header.modeMenu.get())
 
-        modeMenu = ctk.CTkOptionMenu(
-            header,
-            values = ['Name', 'Category', 'Ingredient', 'Area', 'ID'],
-            font = mediumFont,
-            dropdown_font = mediumFont
-        )
+        header.searchButton.configure(command = searchPrompt)
+        header.searchBar.bind('<Return>', searchPrompt)
 
-        modeMenu.grid(row = 0, column = 2, padx = bigPadding, pady = bigPadding, sticky = 'nse')
-
-        searchBar = ctk.CTkEntry(
-            header,
-            placeholder_text = 'Search...',
-            font = bigFont
-        )
-
-        searchBar.grid(row = 0, column = 4, padx = bigPadding, pady = bigPadding, sticky = 'nse')
-
-        searchPrompt = lambda : self.runSearch(searchBar.get(), modeMenu.get())
-        searchBar.bind('<Return>', lambda event : searchPrompt())
-
-        ctk.CTkButton(
-            header,
-            text = '🔍',
-            font = bigFont,
-            command = searchPrompt
-        ).grid(row = 0, column = 3, padx = bigPadding, pady = bigPadding, sticky = 'nse')
-
-        self.cardGrid = CardGridUI(self, 4, 0)
+        self.cardGrid = MainUI(self, 4, 0)
         self.cardGrid.grid(row = 1, column = 0, sticky = 'nsew')
 
     # ---------------- SEARCH LOGIC ---------------- #
@@ -392,8 +581,7 @@ class Application(ctk.CTk) :
         self.cardGrid.loadLabel.configure(text = f'Loading "{prompt}" by {mode}…')
 
         threading.Thread(
-            target = self.searchThread,
-            args = (prompt, mode),
+            target = lambda : self.searchThread(prompt, mode),
             daemon = True
         ).start()
 
@@ -417,5 +605,18 @@ class Application(ctk.CTk) :
         for meal in meals :
             card = CardUI(self.cardGrid, meal, tempImg, self.api)
             self.cardGrid.addCard(card)
+
+    def getAutocomplete(self, text, mode):
+        mode = mode.lower()
+
+        if mode in ['category', 'ingredient', 'area']:
+            options = self.api.listOptions(mode)
+            return [item for item in options if text.lower() in item.lower()][:4]
+
+        if mode == 'name':
+            meals = self.api.searchMeals('name', text)
+            return [meal['strMeal'] for meal in meals][:4] if meals else []
+
+        return []
 
 Application().mainloop()
