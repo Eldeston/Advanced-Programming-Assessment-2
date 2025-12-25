@@ -32,7 +32,7 @@ def debugLongestMealName(api : MealAPI):
 # HeaderUI - Widget
 # MainUI - Widget
 # RecipeUI - Top Level
-# Application - Main Window
+# Application - Main Window 
 
 # -------------------------------- IMPORTS -------------------------------- #
 
@@ -372,13 +372,9 @@ class RecipeUI(ctk.CTkToplevel) :
             imgPIL = Image.open(BytesIO(response.content))
             imgTK = ctk.CTkImage(imgPIL, size = (450, 450))
 
-            self.updateImage(imgTK)
+            self.imgLabel.configure(image = imgTK, text = '')
         except Exception as exception :
             print('Failed to load recipe image :', exception)
-
-    def updateImage(self, imgTK) :
-        self.imgRef = imgTK
-        self.imgLabel.configure(image = imgTK, text = '')
 
 # -------------------------------- HEADER UI -------------------------------- #
 
@@ -506,7 +502,7 @@ class HeaderUI(ctk.CTkFrame) :
         self.autoFrame.grid()
 
         # Update button texts
-        maxChars = 40  # tune this number however you like
+        maxChars = 21 # tune this number however you like
 
         for index, btn in enumerate(self.autoButtons):
             if index < len(suggestions):
