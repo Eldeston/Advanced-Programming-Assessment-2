@@ -1,0 +1,254 @@
+{
+  "main": {
+    "id": "9bacd8cb471e5a95",
+    "type": "split",
+    "children": [
+      {
+        "id": "608daee9261d3306",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "4dbc682bfa86b2ae",
+            "type": "leaf",
+            "state": {
+              "type": "empty",
+              "state": {},
+              "icon": "lucide-file",
+              "title": "New tab"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "1776b8396d85733a",
+    "type": "split",
+    "children": [
+      {
+        "id": "7c0ead86d68c16de",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "bef5fff3a2fde0a1",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "dd36176f980a58c0",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "a6fdaaa35269556b",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 419.5
+  },
+  "right": {
+    "id": "30cd0d9ae5a340a6",
+    "type": "split",
+    "children": [
+      {
+        "id": "7b73ee9f4ffcfa69",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "6fb1cac418322c06",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "Year 1/Classes/02 - Digital Storytelling/Digital Storytelling Index.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for Digital Storytelling Index"
+            }
+          },
+          {
+            "id": "ffd3ed8cc34f9302",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "Year 1/Classes/02 - Digital Storytelling/Digital Storytelling Index.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from Digital Storytelling Index"
+            }
+          },
+          {
+            "id": "c14697c9e0d2680f",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "alphabetical",
+                "useHierarchy": true
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "b31c7080901e0ae6",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "Year 1/Classes/02 - Digital Storytelling/Digital Storytelling Index.md"
+              },
+              "icon": "lucide-list",
+              "title": "Outline of Digital Storytelling Index"
+            }
+          },
+          {
+            "id": "b959631496e7c4b5",
+            "type": "leaf",
+            "state": {
+              "type": "git-view",
+              "state": {},
+              "icon": "lucide-ghost",
+              "title": "git-view"
+            }
+          },
+          {
+            "id": "55701a43d22fab89",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "56e4f4473d4aa0ec",
+            "type": "leaf",
+            "state": {
+              "type": "file-properties",
+              "state": {
+                "file": "Year 1/Classes/02 - Digital Storytelling/Digital Storytelling Index.md"
+              },
+              "icon": "lucide-info",
+              "title": "File properties for Digital Storytelling Index"
+            }
+          }
+        ],
+        "currentTab": 4
+      }
+    ],
+    "direction": "horizontal",
+    "width": 200,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "bases:Create new base": false,
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "audio-recorder:Start/stop recording": false,
+      "canvas:Create new canvas": false
+    }
+  },
+  "active": "4dbc682bfa86b2ae",
+  "lastOpenFiles": [
+    "Year 2 - Semester 1/2 - Games Engine & Scripting/Class 02 - Games Engine & Scripting.md",
+    "Year 2 - Semester 1/3 - Advanced Programming/Class 03 - Advanced Programming.md",
+    "Year 2 - Semester 1/3 - Advanced Programming/Class 06 - Advanced Programming.md",
+    "Year 2 - Semester 1/3 - Advanced Programming/Class 09 - Advanced Programming.md",
+    "Year 2 - Semester 1/3 - Advanced Programming/Class 12 - Advanced Programming.md",
+    "Year 2 - Semester 1/3 - Advanced Programming/Class 15 - Advanced Programming.md",
+    "Year 2 - Semester 1/3 - Advanced Programming/Class 18 - Advanced Programming.md",
+    "Year 2 - Semester 1/3 - Advanced Programming/Class 21 - Advanced Programming.md",
+    "Year 2 - Semester 1/3 - Advanced Programming/Class 24 - Advanced Programming.md",
+    "Year 2 - Semester 1/3 - Advanced Programming/Class 27 - Advanced Programming.md",
+    "Year 2 - Semester 1/3 - Advanced Programming/Class 30 - Advanced Programming.md",
+    "Year 2 - Semester 1/3 - Advanced Programming/Class 33 - Advanced Programming.md",
+    "Year 2 - Semester 1/Timetable - Evening.pdf",
+    "Year 2 - Semester 1/1 - Responsive Web/Class 34 - Responsive Web.md",
+    "Year 2 - Semester 1/1 - Responsive Web/Class 31 - Responsive Web.md",
+    "Year 2 - Semester 1/1 - Responsive Web/Class 01 - Responsive Web.md",
+    "Year 2 - Semester 1/3 - Advanced Programming/Activities/Activity 10/movieDB.py",
+    "Year 2 - Semester 1/3 - Advanced Programming/Activities/Activity 10/weatherMap.py",
+    "Year 2 - Semester 1/3 - Advanced Programming/Activities/Activity 10",
+    "Year 2 - Semester 1/3 - Advanced Programming/Documents/Lecture 9.pptx",
+    "Year 2 - Semester 1/3 - Advanced Programming/Documents/Lecture 7 & 8.pptx",
+    "Year 2 - Semester 1/3 - Advanced Programming/Documents/Lecture 5 & 6.pptx",
+    "Year 2 - Semester 1/2 - Games Engine & Scripting/Class 32 - Games Engine & Scripting.md",
+    "Year 2 - Semester 1/2 - Games Engine & Scripting/Class 29 - Games Engine & Scripting.md",
+    "Year 2 - Semester 1/2 - Games Engine & Scripting/Class 26 - Games Engine & Scripting.md",
+    "Year 2 - Semester 1/2 - Games Engine & Scripting/Class 23 - Games Engine & Scripting.md",
+    "Year 2 - Semester 1/2 - Games Engine & Scripting/Class 20 - Games Engine & Scripting.md",
+    "Year 2 - Semester 1/2 - Games Engine & Scripting/Class 17 - Games Engine & Scripting.md",
+    "Year 2 - Semester 1/2 - Games Engine & Scripting/Class 14 - Games Engine & Scripting.md",
+    "Year 2 - Semester 1/2 - Games Engine & Scripting/Class 11 - Games Engine & Scripting.md",
+    "Year 2 - Semester 1/2 - Games Engine & Scripting/Class 08 - Games Engine & Scripting.md",
+    "Year 2 - Semester 1/2 - Games Engine & Scripting/Class 05 - Games Engine & Scripting.md",
+    "Year 2 - Semester 1/Timetable - Morning.pdf",
+    "Year 2 - Semester 1/1 - Responsive Web/Activities/Activity 11/style.css",
+    "Year 2 - Semester 1/1 - Responsive Web/Activities/Activity 11/script.js",
+    "Year 2 - Semester 1/1 - Responsive Web/Activities/Activity 01/rayquaza.jpg",
+    "Year 2 - Semester 1/1 - Responsive Web/Activities/Activity 01/jirachi.jpg",
+    "Year 2 - Semester 1/1 - Responsive Web/Activities/Activity 01/deoxys.jpg",
+    "Creative Computing Club/Pasted image 20251104123154.png",
+    "Creative Computing Club/Pasted image 20251104130534.png",
+    "Creative Computing Club/Pasted image 20251104130039.png",
+    "Year 2 - Semester 1/3 - Advanced Programming/Activities/Activity 04/hollowKnight.jpg",
+    "Year 2 - Semester 1/3 - Advanced Programming/Activities/Activity 04/hollow knight.jpg",
+    "Year 2 - Semester 1/1 - Responsive Web/Activities/Activity 1/deoxys.jpg",
+    "Year 2 - Semester 1/1 - Responsive Web/Activities/Activity 1/deoxys-normal.jpg",
+    "Year 2 - Semester 1/2 - Game Engine & Scripting/Untitled.canvas",
+    "Year 1/03 - Intro to Programming/Assessments/Assessment 02 - Intro to Python/Untitled.canvas",
+    "Year 1/03 - Intro to Programming/Assessments/Assessment 02 - Intro to Python/flowchart.canvas",
+    "Year 1/03 - Intro to Programming/Assessments/Untitled.canvas",
+    "Untitled.canvas"
+  ]
+}

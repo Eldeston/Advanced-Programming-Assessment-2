@@ -1,0 +1,14 @@
+{
+  "readableLineLength": false,
+  "strictLineBreaks": false,
+  "showLineNumber": true,
+  "livePreview": true,
+  "showInlineTitle": true,
+  "showIndentGuide": true,
+  "propertiesInDocument": "visible",
+  "showUnsupportedFiles": true,
+  "useMarkdownLinks": true,
+  "newLinkFormat": "relative",
+  "alwaysUpdateLinks": true,
+  "attachmentFolderPath": "./"
+}

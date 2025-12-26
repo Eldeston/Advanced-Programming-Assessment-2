@@ -1,0 +1,10 @@
+{
+  "types": {
+    "aliases": "aliases",
+    "cssclasses": "multitext",
+    "tags": "tags",
+    "test": "multitext",
+    "date": "date",
+    "teacher": "text"
+  }
+}
