@@ -267,17 +267,25 @@ class RecipeUI(ctk.CTkToplevel) :
         # Placeholder image
         self.tempImg = ctk.CTkImage(Image.new('RGB', imageBig, 'gray'), size = imageBig)
 
-        # Title
+        # ID
+        ctk.CTkLabel(
+            mainFrame,
+            text = f'Meal ID: {meal['idMeal']}',
+            font = mediumFont,
+            wraplength = 400
+        ).grid(row = 0, column = 0, pady = smallPadding)
+
+        # Meal Name
         ctk.CTkLabel(
             mainFrame,
             text = meal['strMeal'],
             font = bigFont,
             wraplength = 400
-        ).grid(row = 0, column = 0, pady = smallPadding)
+        ).grid(row = 1, column = 0, pady = smallPadding)
 
         # Image placeholder
         self.imgLabel = ctk.CTkLabel(mainFrame, image = self.tempImg, text = '')
-        self.imgLabel.grid(row = 1, column = 0, pady = smallPadding)
+        self.imgLabel.grid(row = 2, column = 0, pady = smallPadding)
 
         # Load image asynchronously
         if meal.get('strMealThumb') :
@@ -295,7 +303,7 @@ class RecipeUI(ctk.CTkToplevel) :
                 mainFrame,
                 text = 'Ingredients',
                 font = mediumFont
-            ).grid(row = 2, column = 0, pady = smallPadding)
+            ).grid(row = 3, column = 0, pady = smallPadding)
 
             for index, item in enumerate(ingredients) :
                 ctk.CTkLabel(
@@ -304,12 +312,12 @@ class RecipeUI(ctk.CTkToplevel) :
                     font = smallFont,
                     anchor = 'w',
                     justify = 'left'
-                ).grid(row = 3 + index, column = 0, sticky = 'w', padx = smallPadding)
+                ).grid(row = 4 + index, column = 0, sticky = 'w', padx = smallPadding)
 
         # ---------------- INSTRUCTIONS FRAME ---------------- #
 
         instructionFrame = ctk.CTkScrollableFrame(self, fg_color = foreGroundCol)
-        instructionFrame.grid(row = 0, column = 1, sticky = 'nsew', padx = bigPadding, pady = bigPadding)
+        instructionFrame.grid(row = 0, column = 1, sticky = 'nswe', padx = bigPadding, pady = bigPadding)
 
         ctk.CTkLabel(
             instructionFrame,
@@ -321,7 +329,7 @@ class RecipeUI(ctk.CTkToplevel) :
             instructionFrame,
             text = meal.get('strInstructions', 'No instructions available.'),
             font = smallFont,
-            wraplength = 400,
+            wraplength = 500,
             justify = 'left'
         )
 
