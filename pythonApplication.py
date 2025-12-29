@@ -28,7 +28,7 @@ import customtkinter as ctk
 # -------------------------------- STYLING -------------------------------- #
 
 applicationName = 'MEALY DISPLAYINATOR 3000'
-applicationVersion = 4.0
+applicationVersion = 5.0
 
 smallPadding = 10
 bigPadding = 20
@@ -258,7 +258,7 @@ class RecipeUI(ctk.CTkToplevel) :
         self.grid_columnconfigure(0, weight = 1)
         self.grid_columnconfigure(1, weight = 1)
 
-        # ---------------- MAIN FRAME (image + ingredients) ---------------- #
+        # ---------------- MAIN FRAME (Left) ---------------- #
 
         mainFrame = ctk.CTkScrollableFrame(self, fg_color = foreGroundCol)
         mainFrame.grid(row = 0, column = 0, sticky = 'nsew', padx = bigPadding, pady = bigPadding)
@@ -294,8 +294,7 @@ class RecipeUI(ctk.CTkToplevel) :
                 daemon = True
             ).start()
 
-        # ---------------- INGREDIENTS ---------------- #
-
+        # Ingredients (Looped)
         ingredients = meal.get('ingredients', [])
 
         if ingredients :
@@ -314,7 +313,7 @@ class RecipeUI(ctk.CTkToplevel) :
                     justify = 'left'
                 ).grid(row = 4 + index, column = 0, sticky = 'w', padx = smallPadding)
 
-        # ---------------- INSTRUCTIONS FRAME ---------------- #
+        # ---------------- INSTRUCTIONS FRAME (Right) ---------------- #
 
         instructionFrame = ctk.CTkScrollableFrame(self, fg_color = foreGroundCol)
         instructionFrame.grid(row = 0, column = 1, sticky = 'nswe', padx = bigPadding, pady = bigPadding)
@@ -335,8 +334,7 @@ class RecipeUI(ctk.CTkToplevel) :
 
         self.instructions_label.grid(row = 1, column = 0, pady = smallPadding, sticky = 'nw')
 
-        # ---------------- YOUTUBE BUTTON ---------------- #
-
+        # YouTube Button, display if link is available
         if meal.get('strYoutube') :
             ctk.CTkButton(
                 self,
@@ -347,8 +345,7 @@ class RecipeUI(ctk.CTkToplevel) :
                 command = lambda : webbrowser.open(meal['strYoutube'])
             ).grid(row = 1, column = 0, padx = bigPadding, pady = bigPadding)
 
-        # ---------------- CLOSE BUTTON ---------------- #
-
+        # Close Button
         ctk.CTkButton(
             self,
             text = 'Close Popup Window',
@@ -394,8 +391,7 @@ class HeaderUI(ctk.CTkFrame) :
             font = bigFont
         ).grid(row = 0, column = 0, padx = bigPadding, pady = bigPadding, sticky = 'nsw')
 
-        # ---------------- MODE MENU ---------------- #
-
+        # Mode menu
         self.modeMenu = ctk.CTkOptionMenu(
             self,
             values = ['Name', 'Category', 'Ingredient', 'Area', 'ID'],
@@ -407,10 +403,9 @@ class HeaderUI(ctk.CTkFrame) :
         )
 
         self.modeMenu.grid(row = 0, column = 2, padx = bigPadding, pady = bigPadding, sticky = 'nse')
-        self.modeMenu.configure(command = self.onModeChange)
+        self.modeMenu.configure(command = lambda e : self.refreshAutocomplete())
 
-        # ---------------- SEARCH BUTTON ---------------- #
-
+        # Search button
         self.searchButton = ctk.CTkButton(
             self,
             text = '🔍',
@@ -421,8 +416,7 @@ class HeaderUI(ctk.CTkFrame) :
 
         self.searchButton.grid(row = 0, column = 3, padx = bigPadding, pady = bigPadding, sticky = 'nse')
 
-        # ---------------- SEARCH BAR ---------------- #
-
+        # Search bar
         self.searchBar = ctk.CTkEntry(
             self,
             placeholder_text = 'Search...',
@@ -433,7 +427,7 @@ class HeaderUI(ctk.CTkFrame) :
         self.searchBar.grid(row = 0, column = 4, ipadx = bigPadding * 8, padx = bigPadding, pady = bigPadding, sticky = 'nswe')
 
         # Bind typing event
-        self.searchBar.bind('<KeyRelease>', self.updateAutocomplete)
+        self.searchBar.bind('<KeyRelease>', lambda e : self.refreshAutocomplete())
 
         # ---------------- AUTOCOMPLETE FRAME ---------------- #
 
@@ -451,7 +445,7 @@ class HeaderUI(ctk.CTkFrame) :
 
         self.suggestLabel.grid(row = 0, column = 0, columnspan = 4, pady = (smallPadding, 0))
 
-        # Pre-create 4 suggestion buttons
+        # Display 4 suggestion buttons, store them for later
         self.autoButtons = []
 
         for index in range(4) :
@@ -468,19 +462,21 @@ class HeaderUI(ctk.CTkFrame) :
             self.autoButtons.append(btn)
 
     # ---------------- AUTOCOMPLETE LOGIC ---------------- #
-
-    def updateAutocomplete(self, event = None) :
+    
+    def refreshAutocomplete(self):
+        mode = self.modeMenu.get()
         text = self.searchBar.get().strip()
+
+        # Update last query
         self.lastQuery = text
 
-        # Hide immediately if empty
-        if not text :
-            self.hideAutocomplete()
+        # Hide and exit early if the text is less than 2 characters
+        if len(self.lastQuery) < 2 :
+            self.autoFrame.grid_remove()
             return
 
-        # Threaded suggestion fetch
         threading.Thread(
-            target = lambda : self.fetchSuggestions(text, self.modeMenu.get()),
+            target = lambda: self.fetchSuggestions(text, mode),
             daemon = True
         ).start()
 
@@ -497,8 +493,9 @@ class HeaderUI(ctk.CTkFrame) :
     def showSuggestions(self, suggestions) :
         self.fullSuggestions = suggestions
 
-        if not (self.lastQuery and suggestions) :
-            self.hideAutocomplete()
+        # Ignore empty suggestions
+        if not suggestions :
+            self.autoFrame.grid_remove()
             return
 
         self.autoFrame.grid()
@@ -513,18 +510,8 @@ class HeaderUI(ctk.CTkFrame) :
 
                 btn.configure(text = buttonText)
                 btn.grid()
-            else:
+            else :
                 btn.grid_remove()
-    
-    def onModeChange(self, newMode):
-        text = self.searchBar.get().strip()
-
-        if not text:
-            self.hideAutocomplete()
-            return
-
-        suggestions = self.getSuggestions(text, newMode)
-        self.showSuggestions(suggestions)
 
     def selectSuggestion(self, index) :
         options = self.fullSuggestions[index]
@@ -536,12 +523,9 @@ class HeaderUI(ctk.CTkFrame) :
 
         self.searchBar.delete(0, 'end')
         self.searchBar.insert(0, buttonText)
-        self.hideAutocomplete()
+        self.autoFrame.grid_remove()
 
         self.runSearch(buttonText, self.modeMenu.get())
-    
-    def hideAutocomplete(self) :
-        self.autoFrame.grid_remove()
 
 # -------------------------------- MAIN APPLICATION -------------------------------- #
 
@@ -619,4 +603,5 @@ class Application(ctk.CTk) :
 
         return []
 
+# Run main application
 Application().mainloop()
