@@ -461,11 +461,17 @@ class HeaderUI(ctk.CTkFrame) :
             btn.grid(row = 1, column = index, padx = bigPadding, pady = bigPadding, sticky = 'we')
             self.autoButtons.append(btn)
 
+    def modeGet(self) :
+        return self.modeMenu.get().lower()
+
+    def searchGet(self) :
+        return self.searchBar.get().lower().strip()
+
     # ---------------- AUTOCOMPLETE LOGIC ---------------- #
     
     def refreshAutocomplete(self):
-        mode = self.modeMenu.get()
-        text = self.searchBar.get().strip()
+        mode = self.modeGet()
+        text = self.searchGet()
 
         # Update last query
         self.lastQuery = text
@@ -525,7 +531,7 @@ class HeaderUI(ctk.CTkFrame) :
         self.searchBar.insert(0, buttonText)
         self.autoFrame.grid_remove()
 
-        self.runSearch(buttonText, self.modeMenu.get())
+        self.runSearch(buttonText, self.modeGet())
 
 # -------------------------------- MAIN APPLICATION -------------------------------- #
 
@@ -544,24 +550,24 @@ class Application(ctk.CTk) :
 
         self.api = MealAPI()
 
-        # ---------------- MAIN UI ---------------- #
-
+        # Header Widget
         header = HeaderUI(self, self.getAutocomplete, self.runSearch)
         header.grid(row = 0, column = 0, sticky = 'nwe')
 
-        header.searchButton.configure(command = lambda : self.runSearch(header.searchBar.get(), header.modeMenu.get()))
-        header.searchBar.bind('<Return>', lambda event : self.runSearch(header.searchBar.get(), header.modeMenu.get()))
+        header.searchButton.configure(command = lambda : self.runSearch(header.searchGet(), header.modeGet()))
+        header.searchBar.bind('<Return>', lambda event : self.runSearch(header.searchGet(), header.modeGet()))
 
-        self.cardGrid = MainUI(self, 4, 0)
-        self.cardGrid.grid(row = 1, column = 0, sticky = 'nsew')
+        # Main Widget
+        self.main = MainUI(self, 4, 0)
+        self.main.grid(row = 1, column = 0, sticky = 'nsew')
 
     # ---------------- SEARCH LOGIC ---------------- #
 
     def runSearch(self, prompt, mode) :
         # Clear grid
-        self.cardGrid.clear()
+        self.main.clear()
         # Change to loading while waiting
-        self.cardGrid.loadLabel.configure(text = f'Loading "{prompt}" by {mode}…')
+        self.main.loadLabel.configure(text = f'Loading "{prompt}" by {mode}…')
 
         threading.Thread(
             target = lambda : self.searchThread(prompt, mode),
@@ -570,7 +576,7 @@ class Application(ctk.CTk) :
 
     def searchThread(self, prompt, mode) :
         # Process Raw API prompt
-        raw = self.api.searchMeals(mode.lower(), prompt.lower())
+        raw = self.api.searchMeals(mode, prompt)
         meals = self.api.processMeals(raw)
 
         # Temp image for all the cards as it loads
@@ -578,27 +584,29 @@ class Application(ctk.CTk) :
 
         # Update loading label if none found
         if not meals :
-            self.after(0, lambda: self.cardGrid.loadLabel.configure(text = "No results found"))
+            self.after(0, lambda: self.main.loadLabel.configure(text = "No results found"))
             return
 
         # Update loading label if results found
-        self.cardGrid.loadLabel.configure(text = f'Recipes for "{prompt}" by {mode}')
+        self.main.loadLabel.configure(text = f'Recipes for "{prompt}" by {mode}')
 
         # Add in the cards
         for meal in meals :
-            card = CardUI(self.cardGrid, meal, tempImg, self.api)
-            self.cardGrid.addCard(card)
+            card = CardUI(self.main, meal, tempImg, self.api)
+            self.main.addCard(card)
 
-    def getAutocomplete(self, text, mode):
-        mode = mode.lower()
-
+    def getAutocomplete(self, text, mode) :
         if mode in ['category', 'ingredient', 'area'] :
+            # Use the API's list feature
             options = self.api.listOptions(mode)
-            return [item for item in options if text.lower() in item.lower()][:4]
+            # Returns only the top 4 results
+            return [item for item in options if text in item.lower()][:4]
 
         if mode == 'name' :
+            # Simply use the API's existing search feature
             raw = self.api.searchMeals('name', text)
             meals = self.api.processMeals(raw)
+            # Returns only the top 4 results
             return meals[:4]
 
         return []
