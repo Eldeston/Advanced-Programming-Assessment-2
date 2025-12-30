@@ -1,3 +1,4 @@
+*Project created by Frem Patalinghug, prepared for Assessment 1 of Responsive Web.*
 # Advanced Programming - Assessment 2
 # Abstract
 This "MEALY DISPLAYINATOR 3000" is a cooking recipe viewer application using “TheMealDB” API. The application fetches user search queries from TheMealDB’s database to be used to serve and display the recipes to the user.
