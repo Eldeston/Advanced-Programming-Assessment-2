@@ -102,6 +102,9 @@ When the user runs their search prompt by pressing enter in the search bar, clic
 Each card stores the meal's full data. Clicking on a card passes the data to the top level window and opens the window as a popup to display the full meal data to the user. This includes the card's initial data, ingredients, instructions, and YouTube URL button which opens the user's browser using the Webbrowser package.
 # Testing
 The application has undergone several revisions up to version 5.0. The initial versions began with the initial layout of the widgets testing the responsive layout. The API is later added and used to connect to the widget's functions. The application is tested against its responsive functions in API and UI and error checking.
+## Responsive UI
+## Error Handling
+## Optimization
 # Critical Reflection
 MEALY DISPLAYINATOR 3000 development has solidified my understanding of Object Oriented Programming. Making a API class helped me manage and organize my functions/methods and improved my abstract thinking. I learned how to create my own widget by inheriting CustomTKinter's available widgets to adapt to CustomTKinter's environment. This makes my workflow similar to how I write in HTML and manage design decisions easily.
 # Appendix
