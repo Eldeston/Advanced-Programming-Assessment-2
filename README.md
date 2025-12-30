@@ -25,7 +25,8 @@ The main app window displays the core elements similar to a traditional website:
 The top level window, or the popup window will open when a recipe card is clicked. The top level window will contain 2 main sections: the prerequisites window and an instructions window. The prerequisites window will contain the meal's name, image, and the required ingredients. The instructions window will contain the instructions on how to prepare and cook the meal. Additionally the top level window will contain buttons to view the recipe's guide on YouTube and a close window button. The necessary contents will be provided by the API.
 
 ![](Assets/Top%20Level%20Window.png)
-## UML Data Structure
+## UML Diagram
+Here is a Unified Modeling Language (UML) Diagram of the application. Each card represents a class in the application and its relationships with other classes.
 
 ```mermaid
 classDiagram
