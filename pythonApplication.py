@@ -33,9 +33,9 @@ applicationVersion = 5.0
 smallPadding = 10
 bigPadding = 20
 
-smallFont = ('JetBrains Mono', 16)
-mediumFont = ('JetBrains Mono', 20)
-bigFont = ('JetBrains Mono', 24, 'bold')
+fontSmall = ('JetBrains Mono', 16)
+fontMedium = ('JetBrains Mono', 20)
+fontBig = ('JetBrains Mono', 24, 'bold')
 
 imageSmall = (300, 300)
 imageBig = (450, 450)
@@ -161,7 +161,7 @@ class CardUI(ctk.CTkFrame) :
         ctk.CTkLabel(
             self,
             text = f'Meal ID: {mealData['idMeal']}',
-            font = smallFont,
+            font = fontSmall,
             wraplength = 300
         ).pack()
 
@@ -169,7 +169,7 @@ class CardUI(ctk.CTkFrame) :
         ctk.CTkLabel(
             self,
             text = mealData['strMealShort'],
-            font = bigFont,
+            font = fontBig,
             wraplength = 300
         ).pack()
 
@@ -218,7 +218,7 @@ class MainUI(ctk.CTkScrollableFrame) :
         self.loadLabel = ctk.CTkLabel(
             self,
             text = 'Start Searching a Recipe',
-            font = bigFont
+            font = fontBig
         )
         
         self.loadLabel.grid(row = 0, column = 0, columnspan = maxColumns, padx = smallPadding, pady = smallPadding)
@@ -271,7 +271,7 @@ class RecipeUI(ctk.CTkToplevel) :
         ctk.CTkLabel(
             mainFrame,
             text = f'Meal ID: {meal['idMeal']}',
-            font = mediumFont,
+            font = fontMedium,
             wraplength = 400
         ).grid(row = 0, column = 0, pady = smallPadding)
 
@@ -279,7 +279,7 @@ class RecipeUI(ctk.CTkToplevel) :
         ctk.CTkLabel(
             mainFrame,
             text = meal['strMeal'],
-            font = bigFont,
+            font = fontBig,
             wraplength = 400
         ).grid(row = 1, column = 0, pady = smallPadding)
 
@@ -301,14 +301,14 @@ class RecipeUI(ctk.CTkToplevel) :
             ctk.CTkLabel(
                 mainFrame,
                 text = 'Ingredients',
-                font = mediumFont
+                font = fontMedium
             ).grid(row = 3, column = 0, pady = smallPadding)
 
             for index, item in enumerate(ingredients) :
                 ctk.CTkLabel(
                     mainFrame,
                     text = item,
-                    font = smallFont,
+                    font = fontSmall,
                     anchor = 'w',
                     justify = 'left'
                 ).grid(row = 4 + index, column = 0, sticky = 'w', padx = smallPadding)
@@ -321,13 +321,13 @@ class RecipeUI(ctk.CTkToplevel) :
         ctk.CTkLabel(
             instructionFrame,
             text = 'Instructions',
-            font = mediumFont
+            font = fontMedium
         ).grid(row = 0, column = 0, pady = smallPadding)
 
         self.instructions_label = ctk.CTkLabel(
             instructionFrame,
             text = meal.get('strInstructions', 'No instructions available.'),
-            font = smallFont,
+            font = fontSmall,
             wraplength = 500,
             justify = 'left'
         )
@@ -339,7 +339,7 @@ class RecipeUI(ctk.CTkToplevel) :
             ctk.CTkButton(
                 self,
                 text = 'Watch YouTube Tutorial',
-                font = mediumFont,
+                font = fontMedium,
                 fg_color = accentCol,
                 hover_color = accentCol,
                 command = lambda : webbrowser.open(meal['strYoutube'])
@@ -349,7 +349,7 @@ class RecipeUI(ctk.CTkToplevel) :
         ctk.CTkButton(
             self,
             text = 'Close Popup Window',
-            font = mediumFont,
+            font = fontMedium,
             fg_color = accentCol,
             hover_color = accentCol,
             command = self.destroy
@@ -388,15 +388,15 @@ class HeaderUI(ctk.CTkFrame) :
         ctk.CTkLabel(
             self,
             text = applicationName,
-            font = bigFont
+            font = fontBig
         ).grid(row = 0, column = 0, padx = bigPadding, pady = bigPadding, sticky = 'nsw')
 
         # Mode menu
         self.modeMenu = ctk.CTkOptionMenu(
             self,
             values = ['Name', 'Category', 'Ingredient', 'Area', 'ID'],
-            font = mediumFont,
-            dropdown_font = mediumFont,
+            font = fontMedium,
+            dropdown_font = fontMedium,
             fg_color = accentCol,
             button_color = accentCol,
             button_hover_color = accentCol
@@ -409,7 +409,7 @@ class HeaderUI(ctk.CTkFrame) :
         self.searchButton = ctk.CTkButton(
             self,
             text = '🔍',
-            font = bigFont,
+            font = fontBig,
             fg_color = accentCol,
             hover_color = accentCol
         )
@@ -420,7 +420,7 @@ class HeaderUI(ctk.CTkFrame) :
         self.searchBar = ctk.CTkEntry(
             self,
             placeholder_text = 'Search...',
-            font = mediumFont,
+            font = fontMedium,
             fg_color = foreGroundCol
         )
 
@@ -440,7 +440,7 @@ class HeaderUI(ctk.CTkFrame) :
         self.suggestLabel = ctk.CTkLabel(
             self.autoFrame,
             text = 'Suggested',
-            font = bigFont
+            font = fontBig
         )
 
         self.suggestLabel.grid(row = 0, column = 0, columnspan = 4, pady = (smallPadding, 0))
@@ -452,7 +452,7 @@ class HeaderUI(ctk.CTkFrame) :
             btn = ctk.CTkButton(
                 self.autoFrame,
                 text = '',
-                font = mediumFont,
+                font = fontMedium,
                 fg_color = accentCol,
                 hover_color = accentCol,
                 command = lambda i = index : self.selectSuggestion(i)

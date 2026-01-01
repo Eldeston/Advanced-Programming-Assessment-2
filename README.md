@@ -30,52 +30,78 @@ Here is a Unified Modeling Language (UML) Diagram of the application. Each card 
 
 ```mermaid
 classDiagram
-    direction TB
+    direction LR
+
+    %% -------------------- CLASSES --------------------
+
+    class MealAPI {
+        +MealAPI()
+        +request(mode, prompt)
+        +searchMeals(mode, prompt)
+        +truncate(text, maxChars)
+        +processMeals(meals)
+        +listOptions(mode)
+        +url : str
+    }
 
     class Application {
         +Application()
         +runSearch(prompt, mode)
         +searchThread(prompt, mode)
         +getAutocomplete(text, mode)
-    }
-
-    class MealAPI {
-        +MealAPI()
-        +request(mode, prompt)
-        +searchMeals(mode, prompt)
-        +truncate(text)
-        +processMeals(meals)
-        +listOptions(mode)
+        +api : MealAPI
+        +main : MainUI
     }
 
     class HeaderUI {
         +HeaderUI(parent, getSuggestions, runSearch)
-        -lastQuery : str
-        -fullSuggestions : list
         +refreshAutocomplete()
         +fetchSuggestions(text, mode)
         +showSuggestions(suggestions)
         +selectSuggestion(index)
+        +modeGet()
+        +searchGet()
+        +lastQuery : str
+        +fullSuggestions : list
+        +runSearch : function
+        +getSuggestions : function
+        +modeMenu
+        +searchButton
+        +searchBar
+        +autoFrame
+        +autoButtons : list
+        +suggestLabel
     }
 
     class MainUI {
         +MainUI(parent, maxColumns, indexOffset)
         +clear()
         +addCard(card)
+        +maxColumns : int
+        +indexOffset : int
+        +cards : list
+        +loadLabel
     }
 
     class CardUI {
         +CardUI(parent, mealData, placeHolder, api)
         +openFullRecipe()
         +loadImageAsync(url)
+        +api : MealAPI
+        +mealData : dict
+        +imgLabel
     }
 
     class RecipeUI {
         +RecipeUI(meal)
         +loadImageAsync(url)
+        +tempImg
+        +imgLabel
+        +instructions_label
     }
 
-    %% Relationships
+    %% -------------------- RELATIONSHIPS --------------------
+
     Application --> MealAPI : uses
     Application --> HeaderUI : contains
     Application --> MainUI : contains
@@ -83,6 +109,9 @@ classDiagram
     MainUI --> CardUI : contains
     CardUI --> MealAPI : uses
     CardUI --> RecipeUI : opens
+
+    HeaderUI --> Application : callback(runSearch)
+    HeaderUI --> Application : callback(getSuggestions)
 ```
 # Technical Description and Walkthrough
 MEALY DISPLAYINATOR 3000 uses Python 3.14.0 and the application uses the following packages:
